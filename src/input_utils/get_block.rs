@@ -16,8 +16,10 @@ pub fn get_inner_block(line: String) -> Vec<String> {
     }
     let mut result = vec![];
     if (end - start > 0) {
-        println!("{}", &line[start..end +1 ]);
-        result = line[start+1..end].split(" ").map(|s| s.to_string()).collect();
+        result = line[start+1..end]
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect();
         return result
     }
     result

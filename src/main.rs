@@ -13,9 +13,14 @@ fn main() {
         if parsed.len() == 0 {
             println!("Nothing found");
         } else if parsed.len() >= 1 {
-            //check if valid code
-            run_command(parsed);
-            println!()
+            match run_command(parsed) {
+                Ok(result) => {
+                    println!("{}", result);
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                }
+            }
         }
     }
 }

@@ -8,7 +8,6 @@ pub fn run_command(input: Vec<String>) -> Result<f64, String> {
         .iter()
         .map(|t| t.parse::<f64>().map_err(|_| format!("Invalid number: {t}")))
         .collect::<Result<Vec<f64>, String>>()?;
-
     eval_op(&op, &args)
 }
 
@@ -48,7 +47,6 @@ fn eval_op(op: &MathOp, args: &[f64]) -> Result<f64, String> {
             Err(format!("Expected {n} args, got {}", args.len()))
         }
     };
-
     match op {
         MathOp::Add      => Ok(args.iter().sum()),
         MathOp::Subtract => { require(2)?; Ok(args.iter().skip(1).fold(args[0], |acc, x| acc - x)) }
