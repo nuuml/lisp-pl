@@ -1,14 +1,78 @@
-pub fn run_command(input: Vec<String>) -> Result<f64, String> {
-    let op = input
-        .first()
-        .and_then(|t| MathOp::from_str(t))
-        .ok_or("Unknown or missing operator")?;
+use std::str::FromStr;
 
-    let args: Vec<f64> = input[1..]
-        .iter()
-        .map(|t| t.parse::<f64>().map_err(|_| format!("Invalid number: {t}")))
-        .collect::<Result<Vec<f64>, String>>()?;
-    eval_op(&op, &args)
+pub fn run_command(input: Vec<String>) -> Result<Option<f64>, String> {
+    let cmd = input
+        .first()
+        .and_then(|t| Command::from_str(t))
+        .ok_or("Unknown or missing command")?;
+
+    match cmd {
+        Command::Math(op) => {
+            let args = input[1..]
+                .iter()
+                .map(|t| t.parse::<f64>().map_err(|_| format!("Invalid number: {t}")))
+                .collect::<Result<Vec<f64>, String>>()?;
+            eval_math_op(&op, &args).map(Some)
+        }
+        Command::String(op) => eval_string_op(&op, &input[1..]),
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Command {
+    Math(MathOp),
+    String(StringOp),
+    // System(SystemOp),
+}
+
+impl Command {
+    pub fn from_str(s: &str) -> Option<Self> {
+        if let Some(op) = MathOp::from_str(s) {
+            return Some(Command::Math(op));
+        }
+        if let Some(op) = StringOp::from_str(s) {
+            return Some(Command::String(op));
+        }
+        None
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum StringOp {
+    Print,
+    Println,
+}
+
+impl StringOp {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "print" => Some(StringOp::Print),
+            "println" => Some(StringOp::Println),
+            _ => None,
+        }
+    }
+}
+
+fn eval_string_op(op: &StringOp, args: &[String]) -> Result<Option<f64>, String> {
+    let require = |n: usize| -> Result<(), String> {
+        if args.len() >= n {
+            Ok(())
+        } else {
+            Err(format!("Expected {n} args, got {}", args.len()))
+        }
+    };
+    match op {
+        StringOp::Print => {
+            require(1)?;
+            print!("{}", args[0].trim_matches('"').trim_matches('\''));
+            Ok(None)
+        }
+        StringOp::Println => {
+            require(1)?;
+            println!("{}", args[0].trim_matches('"').trim_matches('\''));
+            Ok(None)
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -26,20 +90,20 @@ pub enum MathOp {
 impl MathOp {
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
-            "+"    => Some(Self::Add),
-            "-"    => Some(Self::Subtract),
-            "*"    => Some(Self::Multiply),
-            "/"    => Some(Self::Divide),
-            "%"    => Some(Self::Modulo),
+            "+" => Some(Self::Add),
+            "-" => Some(Self::Subtract),
+            "*" => Some(Self::Multiply),
+            "/" => Some(Self::Divide),
+            "%" => Some(Self::Modulo),
             "**" | "^" => Some(Self::Power),
             "sqrt" => Some(Self::Sqrt),
-            "abs"  => Some(Self::Abs),
-            _      => None,
+            "abs" => Some(Self::Abs),
+            _ => None,
         }
     }
 }
 
-fn eval_op(op: &MathOp, args: &[f64]) -> Result<f64, String> {
+fn eval_math_op(op: &MathOp, args: &[f64]) -> Result<f64, String> {
     let require = |n: usize| -> Result<(), String> {
         if args.len() >= n {
             Ok(())
@@ -47,14 +111,40 @@ fn eval_op(op: &MathOp, args: &[f64]) -> Result<f64, String> {
             Err(format!("Expected {n} args, got {}", args.len()))
         }
     };
+
     match op {
-        MathOp::Add      => Ok(args.iter().sum()),
-        MathOp::Subtract => { require(2)?; Ok(args.iter().skip(1).fold(args[0], |acc, x| acc - x)) }
+        MathOp::Add => Ok(args.iter().sum()),
+
+        MathOp::Subtract => {
+            require(2)?;
+            Ok(args.iter().skip(1).fold(args[0], |acc, x| acc - x))
+        }
+
         MathOp::Multiply => Ok(args.iter().product()),
-        MathOp::Divide   => { require(2)?; Ok(args.iter().skip(1).fold(args[0], |acc, x| acc / x)) }
-        MathOp::Modulo   => { require(2)?; Ok(args[0] % args[1]) }
-        MathOp::Power    => { require(2)?; Ok(args[0].powf(args[1])) }
-        MathOp::Sqrt     => { require(1)?; Ok(args[0].sqrt()) }
-        MathOp::Abs      => { require(1)?; Ok(args[0].abs()) }
+
+        MathOp::Divide => {
+            require(2)?;
+            Ok(args.iter().skip(1).fold(args[0], |acc, x| acc / x))
+        }
+
+        MathOp::Modulo => {
+            require(2)?;
+            Ok(args[0] % args[1])
+        }
+
+        MathOp::Power => {
+            require(2)?;
+            Ok(args[0].powf(args[1]))
+        }
+
+        MathOp::Sqrt => {
+            require(1)?;
+            Ok(args[0].sqrt())
+        }
+
+        MathOp::Abs => {
+            require(1)?;
+            Ok(args[0].abs())
+        }
     }
 }

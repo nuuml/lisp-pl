@@ -15,7 +15,7 @@ fn main() {
         } else if parsed.len() >= 1 {
             match run_command(parsed) {
                 Ok(result) => {
-                    println!("{}", result);
+                    println!("{:?}", result);
                 }
                 Err(e) => {
                     eprintln!("Error: {}", e);
