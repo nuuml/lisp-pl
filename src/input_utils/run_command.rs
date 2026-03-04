@@ -15,6 +15,7 @@ pub fn run_command(input: Vec<String>) -> Result<Option<f64>, String> {
             eval_math_op(&op, &args).map(Some)
         }
         Command::String(op) => eval_string_op(&op, &input[1..]),
+        Command::List(op) => eval_list_op(&op, &input[1..]),
     }
 }
 
@@ -22,6 +23,7 @@ pub fn run_command(input: Vec<String>) -> Result<Option<f64>, String> {
 pub enum Command {
     Math(MathOp),
     String(StringOp),
+    List(ListOp)
     // System(SystemOp),
 }
 
@@ -33,10 +35,42 @@ impl Command {
         if let Some(op) = StringOp::from_str(s) {
             return Some(Command::String(op));
         }
+        if let Some(op) = ListOp::from_str(s) {
+            return Some(Command::List(op));
+        }
         None
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum ListOp {
+    List
+}
+
+impl ListOp {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "list" => Some(ListOp::List),
+            _ => None
+        }
+    }
+}
+
+fn eval_list_op(op: &ListOp, args: &[String]) -> Result<Option<f64>, String> {
+    let require = |n: usize| -> Result<(), String> {
+        if args.len() >= n {
+            Ok(())
+        } else {
+            Err(format!("Expected {n} args, got {}", args.len()))
+        }
+    };
+    match op {
+        ListOp::List => {
+            println!("List created");
+            Ok(None)
+        },
+    }
+}
 #[derive(Debug, Clone, PartialEq)]
 pub enum StringOp {
     Print,
@@ -64,12 +98,12 @@ fn eval_string_op(op: &StringOp, args: &[String]) -> Result<Option<f64>, String>
     match op {
         StringOp::Print => {
             require(1)?;
-            print!("{}", args[0].trim_matches('"').trim_matches('\''));
+            print!("{}", args[0]);
             Ok(None)
         }
         StringOp::Println => {
             require(1)?;
-            println!("{}", args[0].trim_matches('"').trim_matches('\''));
+            println!("{}", args[0]);
             Ok(None)
         }
     }
