@@ -75,6 +75,8 @@ fn eval_list_op(op: &ListOp, args: &[String]) -> Result<Option<f64>, String> {
 pub enum StringOp {
     Print,
     Println,
+    StringEq,
+    StringLen
 }
 
 impl StringOp {
@@ -82,6 +84,8 @@ impl StringOp {
         match s {
             "print" => Some(StringOp::Print),
             "println" => Some(StringOp::Println),
+            "string=?" => Some(StringOp::StringEq),
+            "string-length" => Some(StringOp::StringLen),
             _ => None,
         }
     }
@@ -104,6 +108,21 @@ fn eval_string_op(op: &StringOp, args: &[String]) -> Result<Option<f64>, String>
         StringOp::Println => {
             require(1)?;
             println!("{}", args[0]);
+            Ok(None)
+        }
+        StringOp::StringEq => {
+            require(2)?;
+            if args[0] == args[1] {
+                println!("#t");
+                Ok(None)
+            } else {
+                println!("#f");
+                Ok(None)
+            }
+        }
+        StringOp::StringLen => {
+            require(1)?;
+            println!("{}", args[0].chars().count());
             Ok(None)
         }
     }
