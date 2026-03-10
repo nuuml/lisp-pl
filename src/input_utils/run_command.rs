@@ -16,6 +16,7 @@ pub fn run_command(input: Vec<String>) -> Result<Option<f64>, String> {
         }
         Command::String(op) => eval_string_op(&op, &input[1..]),
         Command::List(op) => eval_list_op(&op, &input[1..]),
+        Command::Bool(op) => eval_bool_op(&op, &input),
     }
 }
 
@@ -23,7 +24,8 @@ pub fn run_command(input: Vec<String>) -> Result<Option<f64>, String> {
 pub enum Command {
     Math(MathOp),
     String(StringOp),
-    List(ListOp)
+    List(ListOp),
+    Bool(BoolOp),
     // System(SystemOp),
 }
 
@@ -37,6 +39,9 @@ impl Command {
         }
         if let Some(op) = ListOp::from_str(s) {
             return Some(Command::List(op));
+        }
+        if let Some(op) = BoolOp::from_str(s) {
+            return Some(Command::Bool(op))
         }
         None
     }
@@ -88,6 +93,36 @@ impl StringOp {
             "string-length" => Some(StringOp::StringLen),
             _ => None,
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum BoolOp {
+    True,
+    False
+}
+
+impl BoolOp {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "#t" => Some(BoolOp::True),
+            "#f" => Some(BoolOp::False),
+            _ => None
+        }
+    }
+}
+
+fn eval_bool_op(op: &BoolOp, args: &[String]) -> Result<Option<f64>, String> {
+    let require = |n: usize| -> Result<(), String> {
+        if args.len() >= n {
+            Ok(())
+        } else {
+            Err(format!("Expected {n} args, got {}", n))
+        }
+    };
+    match op {
+        BoolOp::True => Ok(Some(1.0)),
+        BoolOp::False => Ok(Some(0.0)),
     }
 }
 
