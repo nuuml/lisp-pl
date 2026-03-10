@@ -15,7 +15,10 @@ fn main() {
         } else if parsed.len() >= 1 {
             match run_command(parsed) {
                 Ok(result) => {
-                    println!("{:?}", result);
+                    let s = result.to_string();
+                    if !s.is_empty() {
+                        println!("{s}");
+                    }
                 }
                 Err(e) => {
                     eprintln!("Error: {}", e);
