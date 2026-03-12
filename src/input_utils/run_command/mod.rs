@@ -50,6 +50,6 @@ pub fn run_command(input: Vec<String>) -> Result<LispValue, String> {
         }
         Command::String(op) => eval_string_op(&op, &input[1..]),
         Command::List(op) => eval_list_op(&op, &input[1..]),
-        Command::Bool(op) => eval_bool_op(&op, &input),
+        Command::Bool(op) => eval_bool_op(&op, &input[1..]),
     }
 }
