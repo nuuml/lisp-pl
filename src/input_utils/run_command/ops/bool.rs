@@ -2,76 +2,75 @@ use crate::input_utils::run_command::value::LispValue;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BoolOp {
-    True,
-    False,
     GreaterThan,
     LessThan,
     GreaterOrEqual,
     LessOrEqual,
-    Equal
+    Equal,
 }
 
 impl BoolOp {
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
-            "#t" => Some(Self::True),
-            "#f" => Some(Self::False),
-            ">"  => Some(Self::GreaterThan),
-            "<"  => Some(Self::LessThan),
+            ">" => Some(Self::GreaterThan),
+            "<" => Some(Self::LessThan),
             ">=" => Some(Self::GreaterOrEqual),
             "<=" => Some(Self::LessOrEqual),
-            "="  => Some(Self::Equal),
+            "=" => Some(Self::Equal),
             _ => None,
         }
     }
 }
 
-pub fn eval_bool_op(op: &BoolOp, _args: &[String]) -> Result<LispValue, String> {
+pub fn eval_bool_op(op: &BoolOp, args: &[LispValue]) -> Result<LispValue, String> {
     let require = |n: usize| -> Result<(), String> {
-        if _args.len() >= n {
+        if args.len() >= n {
             Ok(())
         } else {
-            Err(format!("Expected {n} args, got {}", _args.len()))
+            Err(format!("Expected {n} args, got {}", args.len()))
         }
     };
+
     match op {
-        BoolOp::True => Ok(LispValue::Bool(true)),
-        BoolOp::False => Ok(LispValue::Bool(false)),
         BoolOp::GreaterThan => {
             require(2)?;
-            let a: f64 = _args[0].parse().unwrap();
-            let b: f64 = _args[1].parse().unwrap();
-            let result = a > b;
-            Ok(LispValue::Bool(result))
-        },
+            let numbers = get_numbers(args)?;
+            Ok(LispValue::Bool(numbers.windows(2).all(|pair| pair[0] > pair[1])))
+        }
         BoolOp::LessThan => {
             require(2)?;
-            let a: f64 = _args[0].parse().unwrap();
-            let b: f64 = _args[1].parse().unwrap();
-            let result = a < b;
-            Ok(LispValue::Bool(result))
-        },
+            let numbers = get_numbers(args)?;
+            Ok(LispValue::Bool(numbers.windows(2).all(|pair| pair[0] < pair[1])))
+        }
         BoolOp::GreaterOrEqual => {
             require(2)?;
-            let a: f64 = _args[0].parse().unwrap();
-            let b: f64 = _args[1].parse().unwrap();
-            let result = a >= b;
-            Ok(LispValue::Bool(result))
-        },
+            let numbers = get_numbers(args)?;
+            Ok(LispValue::Bool(
+                numbers.windows(2).all(|pair| pair[0] >= pair[1]),
+            ))
+        }
         BoolOp::LessOrEqual => {
             require(2)?;
-            let a: f64 = _args[0].parse().unwrap();
-            let b: f64 = _args[1].parse().unwrap();
-            let result = a <= b;
-            Ok(LispValue::Bool(result))
-        },
+            let numbers = get_numbers(args)?;
+            Ok(LispValue::Bool(
+                numbers.windows(2).all(|pair| pair[0] <= pair[1]),
+            ))
+        }
         BoolOp::Equal => {
             require(2)?;
-            let a: f64 = _args[0].parse().unwrap();
-            let b: f64 = _args[1].parse().unwrap();
-            let result = a == b;
-            Ok(LispValue::Bool(result))
+            let first = &args[0];
+            Ok(LispValue::Bool(
+                args[1..].iter().all(|value| value == first),
+            ))
         }
-
     }
+}
+
+fn get_numbers(args: &[LispValue]) -> Result<Vec<f64>, String> {
+    args.iter()
+        .map(|value| match value {
+            LispValue::Number(number) => Ok(*number),
+            _ => Err(format!("Expected number, got {value}")),
+        })
+        .collect::<Result<Vec<f64>, String>>()
 }

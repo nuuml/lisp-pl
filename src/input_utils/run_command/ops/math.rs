@@ -28,52 +28,64 @@ impl MathOp {
     }
 }
 
-pub fn eval_math_op(op: &MathOp, args: &[f64]) -> Result<LispValue, String> {
+pub fn eval_math_op(op: &MathOp, args: &[LispValue]) -> Result<LispValue, String> {
+    let numbers = args
+        .iter()
+        .map(expect_number)
+        .collect::<Result<Vec<f64>, String>>()?;
+
     let require = |n: usize| -> Result<(), String> {
-        if args.len() >= n {
+        if numbers.len() >= n {
             Ok(())
         } else {
-            Err(format!("Expected {n} args, got {}", args.len()))
+            Err(format!("Expected {n} args, got {}", numbers.len()))
         }
     };
 
     match op {
-        MathOp::Add => Ok(LispValue::Number(args.iter().sum())),
+        MathOp::Add => Ok(LispValue::Number(numbers.iter().sum())),
 
         MathOp::Subtract => {
             require(2)?;
             Ok(LispValue::Number(
-                args.iter().skip(1).fold(args[0], |acc, x| acc - x),
+                numbers.iter().skip(1).fold(numbers[0], |acc, x| acc - x),
             ))
         }
 
-        MathOp::Multiply => Ok(LispValue::Number(args.iter().product())),
+        MathOp::Multiply => Ok(LispValue::Number(numbers.iter().product())),
 
         MathOp::Divide => {
             require(2)?;
             Ok(LispValue::Number(
-                args.iter().skip(1).fold(args[0], |acc, x| acc / x),
+                numbers.iter().skip(1).fold(numbers[0], |acc, x| acc / x),
             ))
         }
 
         MathOp::Modulo => {
             require(2)?;
-            Ok(LispValue::Number(args[0] % args[1]))
+            Ok(LispValue::Number(numbers[0] % numbers[1]))
         }
 
         MathOp::Power => {
             require(2)?;
-            Ok(LispValue::Number(args[0].powf(args[1])))
+            Ok(LispValue::Number(numbers[0].powf(numbers[1])))
         }
 
         MathOp::Sqrt => {
             require(1)?;
-            Ok(LispValue::Number(args[0].sqrt()))
+            Ok(LispValue::Number(numbers[0].sqrt()))
         }
 
         MathOp::Abs => {
             require(1)?;
-            Ok(LispValue::Number(args[0].abs()))
+            Ok(LispValue::Number(numbers[0].abs()))
         }
+    }
+}
+
+fn expect_number(value: &LispValue) -> Result<f64, String> {
+    match value {
+        LispValue::Number(number) => Ok(*number),
+        _ => Err(format!("Expected number, got {value}")),
     }
 }

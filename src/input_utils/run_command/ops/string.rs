@@ -20,7 +20,7 @@ impl StringOp {
     }
 }
 
-pub fn eval_string_op(op: &StringOp, args: &[String]) -> Result<LispValue, String> {
+pub fn eval_string_op(op: &StringOp, args: &[LispValue]) -> Result<LispValue, String> {
     let require = |n: usize| -> Result<(), String> {
         if args.len() >= n {
             Ok(())
@@ -42,11 +42,21 @@ pub fn eval_string_op(op: &StringOp, args: &[String]) -> Result<LispValue, Strin
         }
         StringOp::StringEq => {
             require(2)?;
-            Ok(LispValue::Bool(args[0] == args[1]))
+            let left = expect_string(&args[0])?;
+            let right = expect_string(&args[1])?;
+            Ok(LispValue::Bool(left == right))
         }
         StringOp::StringLen => {
             require(1)?;
-            Ok(LispValue::Number(args[0].chars().count() as f64))
+            let value = expect_string(&args[0])?;
+            Ok(LispValue::Number(value.chars().count() as f64))
         }
+    }
+}
+
+fn expect_string(value: &LispValue) -> Result<&str, String> {
+    match value {
+        LispValue::Str(text) => Ok(text),
+        _ => Err(format!("Expected string, got {value}")),
     }
 }

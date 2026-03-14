@@ -1,5 +1,4 @@
 mod input_utils;
-use input_utils::get_block::get_inner_block;
 use input_utils::run_command::run_command;
 
 fn main() {
@@ -8,21 +7,26 @@ fn main() {
         eprint!("𝜆:");
         let mut command = String::new();
         let stdin = std::io::stdin();
-        stdin.read_line(&mut command).unwrap();
-        let parsed = get_inner_block(command);
-        if parsed.len() == 0 {
+        let bytes_read = stdin.read_line(&mut command).unwrap();
+        if bytes_read == 0 {
+            break;
+        }
+        let source = command.trim();
+
+        if source.is_empty() {
             println!("Nothing found");
-        } else if parsed.len() >= 1 {
-            match run_command(parsed) {
-                Ok(result) => {
-                    let s = result.to_string();
-                    if !s.is_empty() {
-                        println!("{s}");
-                    }
+            continue;
+        }
+
+        match run_command(source) {
+            Ok(result) => {
+                let rendered = result.to_string();
+                if !rendered.is_empty() {
+                    println!("{rendered}");
                 }
-                Err(e) => {
-                    eprintln!("Error: {}", e);
-                }
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
             }
         }
     }
